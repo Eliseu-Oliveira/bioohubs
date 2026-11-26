@@ -1,0 +1,11 @@
+export const categories=['Moradia','Alimentação','Transporte','Saúde','Educação','Lazer','Compras','Dívidas','Assinaturas','Salário','Renda extra','Outros'];
+export const money=n=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(n/100);
+export const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+export const shift=(m,n)=>{const [y,k]=m.split('-').map(Number);const d=new Date(y,k-1+n,1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`};
+export const total=(a,type,status)=>a.filter(x=>x.type===type&&(!status||x.status===status)).reduce((s,x)=>s+x.amount,0);
+export const parseAmount=v=>{const s=String(v).trim();if(!/^\d+(?:[.,]\d{1,2})?$/.test(s))return NaN;return Math.round(Number(s.replace(',','.'))*100)};
+export const monthName=m=>new Date(m+'-02T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+export const blank=()=>({description:'',amount:'',date:today(),type:'expense',category:'Outros',status:'pending',person:'Compartilhado',method:'Pix',repeat:'1'});
+export const validDate=s=>typeof s==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(s)&&!isNaN(Date.parse(s))&&new Date(s+'T12:00:00Z').toISOString().slice(0,10)===s;
+export const validData=d=>d&&Array.isArray(d.items)&&d.budgets&&typeof d.budgets==='object'&&!Array.isArray(d.budgets)&&d.items.every(x=>x&&typeof x.id==='string'&&typeof x.description==='string'&&Number.isSafeInteger(x.amount)&&x.amount>0&&validDate(x.date)&&['income','expense'].includes(x.type)&&['paid','pending'].includes(x.status)&&categories.includes(x.category)&&['Compartilhado','Eu','Parceira(o)'].includes(x.person)&&typeof x.method==='string')&&new Set(d.items.map(x=>x.id)).size===d.items.length&&Object.values(d.budgets).every(x=>Number.isSafeInteger(x)&&x>=0);
+export function occurrences(form,amount){return Array.from({length:Number(form.repeat)},(_,i)=>{const m=shift(form.date.slice(0,7),i);const [y,k]=m.split('-').map(Number);const day=Math.min(Number(form.date.slice(8)),new Date(y,k,0).getDate());return {...form,id:crypto.randomUUID(),amount,date:m+'-'+String(day).padStart(2,'0'),status:i?'pending':form.status,description:Number(form.repeat)>1?`${form.description} (${i+1}/${form.repeat})`:form.description,repeat:undefined}})}
